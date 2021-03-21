@@ -10,7 +10,7 @@ With the the Confluent Cloud Metrics Exporter deployment you can fetch [metrics]
 ## Prerequisites/ Assumptions
 
 Before you begin, I assume you have the following in place:
-* A kubernetes cluster
+* A kubernetes cluster (e.g. [AKS](https://docs.microsoft.com/en-us/azure/aks/intro-kubernetes)
 * A [datadog](https://www.datadoghq.com/) account
 * A kafka cluster running in [confluent cloud](https://www.confluent.io/confluent-cloud/)
 
