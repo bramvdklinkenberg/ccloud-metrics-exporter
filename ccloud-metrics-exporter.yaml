@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ccloud-openmetrics
+data:
+  openmetrics: |
+    instances:
+    # The prometheus endpoint to query from
+    - prometheus_url: 'http://ccloudexporter:2112/metrics'
+      namespace: '<VALUE>'
+      metrics:
+        - ccloud*
+        - io.confluent.kafka.server*
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ccloudexporter
+  labels:
+    app: ccloudexporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ccloudexporter
+  template:
+    metadata:
+      labels:
+        app: ccloudexporter
+    spec:
+      hostname: ccloudexporter
+      containers:
+        - name: ccloudexporter
+          image: dabz/ccloudexporter
+          args:
+            - -cluster
+            - '<CONFLUENCE_CLOUD_CLUSTER_ID
+          ports:
+            - containerPort: 2112
+              hostPort: 2112
+              name: ccloudexporter
+          env:
+            - name: CCLOUD_API_KEY
+              value: '<CONFLUENT_CLOUD_API_KEY'
+            - name: CCLOUD_API_SECRET
+              value: '<CONFLUENT_CLOUD_API_SECRET'
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 100m
+            limits:
+              memory: 128Mi
+              cpu: 100m
+
+        - name: cclouddatadog
+          image: "gcr.io/datadoghq/agent:7.25.0"
+          env:
+            - name: DD_API_KEY
+              value: '<DD_API_KEY>'
+            - name: DD_TAGS
+              value: "<e.g. environment:prod region:westeurope service:confluent>"
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 100m
+            limits:
+              memory: 128Mi
+              cpu: 100m
+          volumeMounts:
+            - name: containerdsocket
+              mountPath: /var/run/containerd/containerd.sock
+            - name: procdir
+              mountPath: /host/proc
+              mountPropagation: None
+              readOnly: true
+            - name: cgroups
+              mountPath: /host/sys/fs/cgroup
+              mountPropagation: None
+              readOnly: true
+            - name: ccloud-openmetrics
+              mountPath: /etc/datadog-agent/conf.d/
+              mountPropagation: None
+              readOnly: true
+
+      volumes:
+        - hostPath:
+            path: /var/run/containerd/containerd.sock
+          name: containerdsocket
+        - hostPath:
+            path: /proc
+          name: procdir
+        - hostPath:
+            path: /sys/fs/cgroup
+          name: cgroups
+        - name: ccloud-openmetrics
+          configMap:
+            name: ccloud-openmetrics
+            items:
+              - key: openmetrics
+                path: openmetrics.yaml
