@@ -17,6 +17,20 @@ Before you begin, I assume you have the following in place:
 ## Installing the Confluent Cloud Metrics Exporter
 
 ```
+git clone https://github.com/bramvdklinkenberg/ccloud-metrics-exporter.git
+```
+
+```
+cd ccloud-metrics-exporter
+```
+
+Before you deploy the exporter you need to change the '<VALUE>' fields with the correct information.
+
+```
+vi ccloud-metrics-exporter.yaml
+```
+
+```
 kubectl apply -f ccloud-metrics-exporter.yaml
 ```
 
